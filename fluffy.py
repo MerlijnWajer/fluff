@@ -3,25 +3,25 @@ from random import shuffle
 import sys
 
 class Card(object):
-    def on_draw():
+    def on_draw(self):
         """
         Call upon drawing from deck.
         """
         raise NotImplementedError("Override me :(")
 
-    def on_play():
+    def on_play(self):
         """
         Call upon coming into play.
         """
         raise NotImplementedError("Override me :(")
 
-    def on_remove():
+    def on_remove(self):
         """
         Call upon removal from play.
         """
         raise NotImplementedError("Override me :(")
 
-    def on_discard():
+    def on_discard(self):
         """
         Call upon removal from hand.
         """
@@ -31,7 +31,7 @@ class Keeper(Card):
     def __init__(self, name):
         self.name = name
 
-    def exec_card(self):
+    def on_play(self):
         print "Player %s played keeper %s" % \
             (game.xs_turn.name, self.name)
         game.xs_turn.keepers.append(self)
@@ -45,6 +45,10 @@ class Goal(Card):
 
     def __str__(self):
         return "<Goal: %s>" % self.name
+
+    def on_play(self):
+        print "The goal changed from %s to %s" % (game.goal, self)
+        game.goal = self
 
     def check_goal(self):
         """
@@ -94,7 +98,7 @@ class NewRule(Card):
     def exec_rule(self):
         raise NotImplementedError("Override me! :(")
 
-    def classify():
+    def classify(self):
         """
         Returns exclusive rule class, only a single cards
         of a certain rule class may be into play at a given time.
@@ -121,13 +125,13 @@ class BasicRules(NewRule):
         NewRule.__init__(self, "Basic rules",
             "Draw 1 card, Play 1 card")
 
-    def on_draw():
+    def on_draw(self):
         pass
 
-    def on_play():
+    def on_play(self):
         pass
 
-    def on_discard():
+    def on_discard(self):
         pass
 
     def exec_rule(self):
@@ -160,6 +164,7 @@ class Game(object):
     def __init__(self, players, deck):
         self.players = players
         shuffle(deck)
+        self.goal = None
         self.deck = deck
         self.trash = []
         self.rules = []
@@ -191,6 +196,11 @@ class Game(object):
             self.start_turn()
             #self.xs_turn.playCard("Pick a card from your hand")
             self.xs_turn.play_card()
+            if self.goal:
+                gc = self.goal.check_goal()
+                if gc:
+                    print "Player %s has fulfilled goal %s" % (gc, self.goal)
+                    return
 
     def setup_game(self):
         # Deal the initial cards
@@ -209,7 +219,7 @@ class Game(object):
         self.trash.append(card)
 
     def play_card(self, card):
-        card.exec_card()
+        card.on_play()
         self.trash.append(card)
 
 class Player(object):
@@ -221,6 +231,9 @@ class Player(object):
 
     def do_turn(self):
         raise NotImplementedError("Override me too :(")
+
+    def __str__(self):
+        return self.name
 
 class ShellPlayer(Player):
     def issue(self):
@@ -245,6 +258,13 @@ class ShellPlayer(Player):
 
     def play_card(self):
         print "Pick a card to play"
+
+        print "Your keepers"
+        for keeper in self.keepers:
+            print keeper
+        print "Your handers"
+        for card in self.hand:
+            print card
 
         while True:
             try:
@@ -293,12 +313,12 @@ for k in keepers:
     #print "Setup keeper", global_name
     locals()[global_name] = k
 
-keeper_goals = [KeeperGoal(*nk) for nk in [("Rocket science", [k_brain, k_rocket]), ("Night and day", [k_moon, k_sun])]]
+keeper_goals = [KeeperGoal(*nk) for nk in [("Rocket science", [k_brain, k_rocket]), ("Night and day", [k_moon, k_sun]), ("Fresh bread", [k_bread])]]
 deck = []
 deck.extend(keepers)
 deck.extend(keeper_goals)
 
-players = [ShellPlayer(x) for x in ["Foo", "Bar", "Baz", "Quux"]]
+players = [ShellPlayer(x) for x in ["Spam", "Ham", "Eggs", "Parrot"]]
 
 game = Game(players, deck)
 game.run()
