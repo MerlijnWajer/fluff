@@ -9,7 +9,7 @@ class Card(object):
         """
         raise NotImplementedError("Override me :(")
 
-    def on_play()
+    def on_play():
         """
         Call upon coming into play.
         """
@@ -31,7 +31,7 @@ class Keeper(Card):
     def __init__(self, name):
         self.name = name
 
-    def execCard(self):
+    def exec_card(self):
         print "Player %s played keeper %s" % \
             (game.xs_turn.name, self.name)
         game.xs_turn.keepers.append(self)
@@ -63,20 +63,20 @@ class NewRule(Card):
         self.name = name
         self.descr = descr
 
-    def execCard(self):
+    def exec_card(self):
         print "Player %s played a new rule %s" % \
             (game.xs_turn.name, self.name)
         print "----------"
         print self.descr
         game.self.rules.append(self)
 
-    def onEnterGame(self):
+    def on_enter_game(self):
         pass
 
-    def onLeaveGame(self):
+    def on_leave_game(self):
         pass
 
-    def execRule(self):
+    def exec_rule(self):
         raise NotImplementedError("Override me! :(")
 
     def classify():
@@ -87,6 +87,14 @@ class NewRule(Card):
         """
 
         return None
+
+class Goal(Card):
+    def __init__(self, name, desc):
+        self.name = name
+        self.desc = desc
+
+    def check_goal(self):
+        raise NotImplementedError("Override me! :(")
 
 class Player(object):
     def __init__(self, name):
@@ -107,7 +115,7 @@ class BasicRules(NewRule):
     def on_discard():
         pass
 
-    def execRule(self):
+    def exec_rule(self):
         game.xs_turn.hand.append(game.drawCard())
         game.xs_turn.doAction("Play a card")
 
@@ -119,7 +127,7 @@ Players draw %d cards on the start of their turn.
         """ % count)
         self.count = count
 
-    def execRule(self):
+    def exec_rule(self):
         # -1 because the basic rules will inforce
         # a draw
         # XXX: Change later with respect to inflation?
@@ -163,20 +171,20 @@ class Game(object):
         # Deal the initial cards
         for _ in xrange(len(self.players)):
             for _ in xrange(3):
-                self.xs_turn.hand.append(self.drawCard())
+                self.xs_turn.hand.append(self.draw_card())
             self.next_player()
 
-    def drawCard(self):
+    def draw_card(self):
         if not self.deck:
             pass
             # Shuffle trash into deck
         return self.deck.pop(0)
 
-    def discardCard(self, card):
+    def discard_card(self, card):
         self.trash.append(card)
 
-    def playCard(self, card):
-        card.execCard()
+    def play_card(self, card):
+        card.exec_card()
         self.trash.append(card)
 
 class Player(object):
@@ -184,7 +192,7 @@ class Player(object):
         self.name = name
         self.hand = []
 
-    def doTurn(self):
+    def do_turn(self):
         raise NotImplementedError("Override me too :(")
 
 class ShellPlayer(Player):
@@ -201,14 +209,14 @@ class ShellPlayer(Player):
         for card in self.hand:
             print card
 
-        self.playCard()
+        self.play_card()
 
-    def drawCard():
+    def draw_card():
         print "You draw a card"
-        self.hand.append(game.drawCard())
+        self.hand.append(game.draw_card())
         print self.hand[-1]
 
-    def playCard()
+    def play_card():
         print "Pick a card to play"
 
         while True:
@@ -228,7 +236,7 @@ class ShellPlayer(Player):
                 print "Invalid number"
 
         card = self.hand.pop(num)
-        game.playCard(card)
+        game.play_card(card)
 
 deck = keepers
 
