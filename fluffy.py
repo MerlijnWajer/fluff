@@ -36,27 +36,42 @@ class Keeper(Card):
             (game.xs_turn.name, self.name)
         game.xs_turn.keepers.append(self)
 
-keepers = [Keeper(name) for name in [
-    "Brain, The",
-    "Bread",
-    "Chocolate",
-    "Cookies",
-    "Cosmos, The",
-    "Dreams",
-    "Eye, The",
-    "Love",
-    "Milk",
-    "Money",
-    "Moon, The",
-    "Peace",
-    "Rocket, The",
-    "Sleep",
-    "Sun, The",
-    "Television",
-    "Time",
-    "Toaster, The",
-    "Party, The"
-    ]]
+    def __str__(self):
+        return "<Keeper: %s>" % self.name
+
+class Goal(Card):
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return "<Goal: %s>" % self.name
+
+    def check_goal(self):
+        """
+        Return player object if this goal has been reached.
+        """
+
+        raise NotImplementedError("Override me :(")
+
+class KeeperGoal(Goal):
+    """
+    This class signifies a player has to gather
+    a certain set of keepers to win.
+    """
+
+    def __init__(self, name, keepers):
+        super(KeeperGoal, self).__init__(name)
+        self.keepers = keepers
+
+    def check_goal(self):
+        for player in game.players:
+            # Check if player has the required keepers
+            if len(self.keepers) == len(filter(lambda x: x in self.keepers,
+                    player.keepers)):
+                # There can only be one
+                return player
+
+        return None
 
 class NewRule(Card):
     def __init__(self, name, descr):
@@ -157,8 +172,16 @@ class Game(object):
 
     def start_turn(self):
         print "Player %s's turn" % self.xs_turn.name
-        for rule in self.rules:
-            rule.execRule()
+
+        # Notify player it's his/her turn
+        self.xs_turn.issue()
+
+        # Hardwired draw card
+        self.xs_turn.draw_card()
+
+        # No rules!
+        #for rule in self.rules:
+        #    rule.execRule()
 
     def run(self):
         self.setup_game()
@@ -166,6 +189,8 @@ class Game(object):
         while True:
             self.next_player()
             self.start_turn()
+            #self.xs_turn.playCard("Pick a card from your hand")
+            self.xs_turn.play_card()
 
     def setup_game(self):
         # Deal the initial cards
@@ -191,6 +216,8 @@ class Player(object):
     def __init__(self, name):
         self.name = name
         self.hand = []
+        self.keepers = []
+        self.creepers = []
 
     def do_turn(self):
         raise NotImplementedError("Override me too :(")
@@ -211,12 +238,12 @@ class ShellPlayer(Player):
 
         self.play_card()
 
-    def draw_card():
+    def draw_card(self):
         print "You draw a card"
         self.hand.append(game.draw_card())
         print self.hand[-1]
 
-    def play_card():
+    def play_card(self):
         print "Pick a card to play"
 
         while True:
@@ -238,7 +265,38 @@ class ShellPlayer(Player):
         card = self.hand.pop(num)
         game.play_card(card)
 
-deck = keepers
+keepers = [Keeper(name) for name in [
+    "Brain, The",
+    "Bread",
+    "Chocolate",
+    "Cookies",
+    "Cosmos, The",
+    "Dreams",
+    "Eye, The",
+    "Love",
+    "Milk",
+    "Money",
+    "Moon, The",
+    "Peace",
+    "Rocket, The",
+    "Sleep",
+    "Sun, The",
+    "Television",
+    "Time",
+    "Toaster, The",
+    "Party, The"
+    ]]
+
+# Setup keeper globals
+for k in keepers:
+    global_name = "k_" + k.name.split(",")[0].lower()
+    #print "Setup keeper", global_name
+    locals()[global_name] = k
+
+keeper_goals = [KeeperGoal(*nk) for nk in [("Rocket science", [k_brain, k_rocket]), ("Night and day", [k_moon, k_sun])]]
+deck = []
+deck.extend(keepers)
+deck.extend(keeper_goals)
 
 players = [ShellPlayer(x) for x in ["Foo", "Bar", "Baz", "Quux"]]
 
